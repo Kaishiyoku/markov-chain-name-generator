@@ -1,0 +1,26 @@
+{
+    "name": "kaishiyoku/markov-chain-name-generator",
+    "description": "A name generator using a Markov chain and syllables",
+    "homepage": "https://github.com/kaishiyoku/markov-chain-name-generator",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andreas Wiedel",
+            "email": "dev@andreas-wiedel.de",
+            "homepage": "https://andreas-wiedel.de"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "illuminate/support": "^6.13"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kaishiyoku\\MarkovChainNameGenerator\\": "src/"
+        }
+    }
+}
