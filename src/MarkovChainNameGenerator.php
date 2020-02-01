@@ -13,7 +13,7 @@ class MarkovChainNameGenerator
      * @return array
      * @throws Exception
      */
-    public function generateNames(array $names, array $nameSuffixes, int $count = 1): array
+    public function generateNames(array $names, array $nameSuffixes= [], int $count = 1): array
     {
         $suffixes = collect(range(0, count($nameSuffixes) * 2 - 1))->map(function ($value, $key) use ($nameSuffixes) {
             if ($key < count($nameSuffixes)) {
@@ -89,8 +89,8 @@ class MarkovChainNameGenerator
             $nameCount += 1;
         }
 
-        return array_map(function ($planetName) {
-            return ucwords(trim($planetName));
+        return array_map(function ($name) {
+            return ucwords(trim($name));
         }, $generatedNames);
     }
 }
