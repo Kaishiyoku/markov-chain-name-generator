@@ -2,7 +2,9 @@
 
 namespace Kaishiyoku\MarkovChainNameGenerator;
 
-class MarkovChainNameGeneratorServiceProvider
+use Illuminate\Support\ServiceProvider;
+
+class MarkovChainNameGeneratorServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
