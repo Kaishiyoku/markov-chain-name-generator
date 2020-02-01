@@ -1,8 +1,6 @@
 <?php
 
-namespace Kaishiyoku\MarkovChainNameGenerator\ServiceProvider;
-
-use Kaishiyoku\MarkovChainNameGenerator\MarkovChainNameGenerator;
+namespace Kaishiyoku\MarkovChainNameGenerator;
 
 class MarkovChainNameGeneratorServiceProvider
 {

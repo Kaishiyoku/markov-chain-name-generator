@@ -26,10 +26,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Kaishiyoku\\MarkovChainNameGenerator\\ServiceProvider"
+                "Kaishiyoku\\MarkovChainNameGenerator\\MarkovChainNameGeneratorServiceProvider"
             ],
             "aliases": {
-                "MarkovChainNameGenerator": "Kaishiyoku\\MarkovChainNameGenerator\\Facade"
+                "MarkovChainNameGenerator": "Kaishiyoku\\MarkovChainNameGenerator\\MarkovChainNameGeneratorFacade"
             }
         }
     }

@@ -1,9 +1,8 @@
 <?php
 
-namespace Kaishiyoku\MarkovChainNameGenerator\Facade;
+namespace Kaishiyoku\MarkovChainNameGenerator;
 
 use Illuminate\Support\Facades\Facade;
-use Kaishiyoku\MarkovChainNameGenerator\MarkovChainNameGenerator;
 
 class MarkovChainNameGeneratorFacade extends Facade
 {
