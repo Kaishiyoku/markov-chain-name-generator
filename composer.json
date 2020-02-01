@@ -22,5 +22,15 @@
         "psr-4": {
             "Kaishiyoku\\MarkovChainNameGenerator\\": "src/"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kaishiyoku\\MarkovChainNameGenerator\\ServiceProvider"
+            ],
+            "aliases": {
+                "MarkovChainNameGenerator": "Kaishiyoku\\MarkovChainNameGenerator\\Facade"
+            }
+        }
     }
 }
