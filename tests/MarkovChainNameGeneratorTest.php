@@ -44,6 +44,6 @@ class MarkovChainNameGeneratorTest extends TestCase
 
         $name = 'AAA';
 
-        $this->assertRegExp('/^A+$/', $markovChainNameGenerator->generateNames([$name])[0]);
+        $this->assertRegExp('/^Aa*$/', $markovChainNameGenerator->generateNames([$name])[0]);
     }
 }

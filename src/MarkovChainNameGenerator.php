@@ -90,7 +90,7 @@ class MarkovChainNameGenerator
         }
 
         return array_map(function ($name) {
-            return ucwords(trim($name));
+            return ucwords(strtolower(trim($name)));
         }, $generatedNames);
     }
 }
