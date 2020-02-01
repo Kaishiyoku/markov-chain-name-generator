@@ -7,17 +7,18 @@ use Exception;
 class MarkovChainNameGenerator
 {
     /**
-     * @param array $names
-     * @param array $nameSuffixes
+     * @param array $seedNames
+     * @param array $seedNameSuffixes
      * @param int $count
      * @return array
      * @throws Exception
      */
-    public function generateNames(array $names, array $nameSuffixes= [], int $count = 1): array
+    public function generateNames(array $seedNames, array $seedNameSuffixes= [], int $count = 1): array
     {
-        $suffixes = collect(range(0, count($nameSuffixes) * 2 - 1))->map(function ($value, $key) use ($nameSuffixes) {
-            if ($key < count($nameSuffixes)) {
-                return $nameSuffixes[$key];
+        $names = collect($seedNames);
+        $suffixes = collect(range(0, count($seedNameSuffixes) * 2 - 1))->map(function ($value, $key) use ($seedNameSuffixes) {
+            if ($key < count($seedNameSuffixes)) {
+                return $seedNameSuffixes[$key];
             }
 
             return '';
@@ -26,16 +27,16 @@ class MarkovChainNameGenerator
         $totalSyllables = 0;
         $syllables = [];
 
-        foreach ($names as $n) {
-            $lex = explode('-', $n);
+        $names->each(function ($name) use (&$totalSyllables, &$syllables) {
+            $lex = collect(explode('-', $name));
             $totalSyllables += count($lex);
 
-            foreach ($lex as $l) {
-                if (!array_search($l, $syllables)) {
+            $lex->each(function ($l) use (&$syllables) {
+                if (!in_array($l, $syllables, true)) {
                     $syllables[] = $l;
                 }
-            }
-        }
+            });
+        });
 
         $divIndex = count($syllables) / $totalSyllables;
 
@@ -50,47 +51,47 @@ class MarkovChainNameGenerator
             $i = 0;
 
             while ($i < count($lex) - 1) {
-                $keyA = array_search($lex[$i], $syllables);
-                $keyB = array_search($lex[$i + 1], $syllables);
+                $keyA = array_search($lex[$i], $syllables, true);
+                $keyB = array_search($lex[$i + 1], $syllables, true);
 
                 $freq[$keyA][$keyB] += 1;
-                $i += 1;
+                ++$i;
             }
 
-            $freq[array_search($lex[count($lex) - 1], $syllables)][$size - 1] += 1;
+            $freq[array_search($lex[count($lex) - 1], $syllables, true)][$size - 1] += 1;
         }
 
         $nameCount = 0;
         $name = '';
 
-        $generatedNames = [];
+        $generatedNames = collect();
 
         while ($nameCount < $count) {
             $length = random_int(2, 3);
             $initial = random_int(0, $size - 2);
 
             while ($length > 0) {
-                while (!array_search(1, $freq[$initial])) {
+                while (!in_array(1, $freq[$initial], true)) {
                     $initial = random_int(0, $size - 2);
                 }
 
-                $name .= $syllables[$initial];
-                $initial = array_search(1, $freq[$initial]);
-                $length -= 1;
+                $name .= strtolower($syllables[$initial]);
+                $initial = in_array(1, $freq[$initial], true);
+                --$length;
             }
 
             $suffixIndex = random_int(0, count($suffixes) - 1);
             $name .= ' ';
             $name .= $suffixes[$suffixIndex];
 
-            $generatedNames[] = $name;
+            $generatedNames->add($name);
 
             $name = '';
-            $nameCount += 1;
+            ++$nameCount;
         }
 
-        return array_map(function ($name) {
-            return ucwords(strtolower(trim($name)));
-        }, $generatedNames);
+        return $generatedNames->map(function ($name) {
+            return ucwords(trim($name));
+        })->toArray();
     }
 }
