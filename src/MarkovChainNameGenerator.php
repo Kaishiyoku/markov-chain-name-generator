@@ -30,7 +30,11 @@ class MarkovChainNameGenerator
      */
     public function generateNames(array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1): array
     {
-        $generator = $this->generator($this->getDelimiter(), $this->getMaxNumberOfSyllables(), $this->getEmptySuffixesMultiplier());
+        $generator = $this->generator(
+            $this->getDelimiter(),
+            $this->getMaxNumberOfSyllables(),
+            $this->getEmptySuffixesMultiplier()
+        );
 
         return $generator($seedNames, $seedNameSuffixes, $numberOfNames);
     }
@@ -111,23 +115,21 @@ class MarkovChainNameGenerator
                 })
                 ->shuffle();
 
-            $matrix = $this->generateEmptyMatrix($syllables);
+            $matrix = $this->fillMatrix($this->generateEmptyMatrix($syllables), $names, $syllables, $delimiter);
 
-            $matrix = $this->fillMatrix($matrix, $names, $syllables, $delimiter);
-
-            return $this->generateNamesFromMatrix($numberOfNames, $syllables, $matrix, $suffixes, $maxNumberOfSyllables);
+            return $this->generateNamesFromMatrix($matrix, $syllables, $suffixes, $numberOfNames, $maxNumberOfSyllables);
         };
     }
 
     /**
+     * @param array $matrix
      * @param int $numberOfNames
      * @param Collection $syllables
-     * @param array $matrix
      * @param Collection $suffixes
      * @param int $maxNumberOfSyllables
      * @return array
      */
-    private function generateNamesFromMatrix(int $numberOfNames, Collection $syllables, array $matrix, Collection $suffixes, int $maxNumberOfSyllables): array
+    private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $maxNumberOfSyllables): array
     {
         return collect(range(1, $numberOfNames))
             ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
