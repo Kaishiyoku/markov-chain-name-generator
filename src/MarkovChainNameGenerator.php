@@ -122,6 +122,30 @@ class MarkovChainNameGenerator
     }
 
     /**
+     * @param string $name
+     * @param string $initial
+     * @param array $matrix
+     * @param Collection $syllables
+     * @param int $length
+     * @return string
+     */
+    private function generateSyllable(string $name, string $initial, array $matrix, Collection $syllables, int $length): string
+    {
+        if ($length === 0) {
+            return $name;
+        }
+
+        while (!in_array(1, $matrix[$initial], true)) {
+            $initial = $syllables->random();
+        }
+
+        $name .= strtolower($initial);
+        $initial = array_search(1, $matrix[$initial], true);
+
+        return $this->generateSyllable($name, $initial, $matrix, $syllables, $length - 1);
+    }
+
+    /**
      * @param array $matrix
      * @param int $numberOfNames
      * @param Collection $syllables
@@ -133,18 +157,10 @@ class MarkovChainNameGenerator
     {
         return collect(range(1, $numberOfNames))
             ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
-                $name = '';
                 $initial = $syllables->random();
+                $length = random_int(2, $maxNumberOfSyllables);
 
-                collect(range(0, random_int(2, $maxNumberOfSyllables) - 1))
-                    ->each(function ($i) use ($matrix, $syllables, &$name, &$initial) {
-                        while (!in_array(1, $matrix[$initial], true)) {
-                            $initial = $syllables->random();
-                        }
-
-                        $name .= strtolower($initial);
-                        $initial = array_search(1, $matrix[$initial], true);
-                    });
+                $name = $this->generateSyllable('', $initial, $matrix, $syllables, $length);
 
                 $suffixIndex = random_int(0, $suffixes->count() - 1);
                 $name .= ' ';
