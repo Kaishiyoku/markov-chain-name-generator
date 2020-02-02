@@ -2,6 +2,8 @@
 
 namespace Kaishiyoku\MarkovChainNameGenerator;
 
+use Closure;
+
 class MarkovChainNameGenerator
 {
     /**
@@ -27,109 +29,96 @@ class MarkovChainNameGenerator
      */
     public function generateNames(array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1): array
     {
-        return $this->generator(
-            $seedNames,
-            $this->getDelimiter(),
-            $this->getMaxNumberOfSyllables(),
-            $this->getEmptySuffixesMultiplier(),
-            $seedNameSuffixes,
-            $numberOfNames
-        );
+        $generator = $this->generator($this->getDelimiter(), $this->getMaxNumberOfSyllables(), $this->getEmptySuffixesMultiplier());
+
+        return $generator($seedNames, $seedNameSuffixes, $numberOfNames);
     }
 
     /**
-     * @param array $seedNames
      * @param string $delimiter
      * @param int $maxNumberOfSyllables
      * @param int $emptySuffixesMultiplier
-     * @param array $seedNameSuffixes
-     * @param int $numberOfNames
-     * @return array
+     * @return Closure
      */
-    private function generator(
-        array $seedNames,
-        string $delimiter,
-        int $maxNumberOfSyllables,
-        int $emptySuffixesMultiplier,
-        array $seedNameSuffixes = [],
-        int $numberOfNames = 1
-    ): array
+    private function generator(string $delimiter, int $maxNumberOfSyllables, int $emptySuffixesMultiplier): Closure
     {
-        $names = collect($seedNames);
-        $syllables = collect($seedNames)
-            ->map(function ($seedName) use ($delimiter) {
-                return explode($delimiter, $seedName);
-            })
-            ->flatten()
-            ->unique();
+        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use ($delimiter, $maxNumberOfSyllables, $emptySuffixesMultiplier) {
+            $names = collect($seedNames);
+            $syllables = collect($seedNames)
+                ->map(function ($seedName) use ($delimiter) {
+                    return explode($delimiter, $seedName);
+                })
+                ->flatten()
+                ->unique();
 
-        // preserve empty suffixes, too, so that not every name has a suffix
-        $suffixes = collect(range(0, count($seedNameSuffixes) * $emptySuffixesMultiplier))
-            ->map(function ($value, $key) use ($seedNameSuffixes) {
-                if ($key < count($seedNameSuffixes)) {
-                    return $seedNameSuffixes[$key];
-                }
-
-                return '';
-            })
-            ->shuffle();
-
-        $matrix = $syllables->mapWithKeys(function ($syllable, $key) use ($syllables) {
-            return [$syllable => $syllables->mapWithKeys(function ($syllable, $key) {
-                return [$syllable => 0];
-            })];
-        });
-
-        $matrix = $matrix->map(function ($a) {
-            return $a->toArray();
-        })->toArray();
-
-        $names->each(function ($name) use (&$matrix, $syllables, $delimiter) {
-            $lex = explode($delimiter, $name);
-            $i = 0;
-
-            while ($i < count($lex) - 1) {
-                $syllableA = $lex[$i];
-                $syllableB = $lex[$i + 1];
-
-                $matrix[$syllableA][$syllableB] += 1;
-                ++$i;
-            }
-
-            $keyA = $lex[count($lex) - 1];
-            $keyB = $syllables->last();
-
-            $matrix[$keyA][$keyB] += 1;
-        });
-
-        $generatedNames = collect(range(1, $numberOfNames))
-            ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
-                $name = '';
-                $length = random_int(2, $maxNumberOfSyllables);
-                $initial = $syllables->random();
-
-                while ($length > 0) {
-                    while (!in_array(1, $matrix[$initial], true)) {
-                        $initial = $syllables->random();
+            // preserve empty suffixes, too, so that not every name has a suffix
+            $suffixes = collect(range(0, count($seedNameSuffixes) * $emptySuffixesMultiplier))
+                ->map(function ($value, $key) use ($seedNameSuffixes) {
+                    if ($key < count($seedNameSuffixes)) {
+                        return $seedNameSuffixes[$key];
                     }
 
-                    $name .= strtolower($initial);
-                    $initial = array_search(1, $matrix[$initial], true);
-                    --$length;
-                }
+                    return '';
+                })
+                ->shuffle();
 
-                $suffixIndex = random_int(0, $suffixes->count() - 1);
-                $name .= ' ';
-                $name .= $suffixes->get($suffixIndex);
-
-                return $name;
+            $matrix = $syllables->mapWithKeys(function ($syllable, $key) use ($syllables) {
+                return [$syllable => $syllables->mapWithKeys(function ($syllable, $key) {
+                    return [$syllable => 0];
+                })];
             });
 
-        return $generatedNames
-            ->map(function ($generatedName) {
-                return ucwords(trim($generatedName));
-            })
-            ->toArray();
+            $matrix = $matrix->map(function ($a) {
+                return $a->toArray();
+            })->toArray();
+
+            $names->each(function ($name) use (&$matrix, $syllables, $delimiter) {
+                $lex = explode($delimiter, $name);
+                $i = 0;
+
+                while ($i < count($lex) - 1) {
+                    $syllableA = $lex[$i];
+                    $syllableB = $lex[$i + 1];
+
+                    $matrix[$syllableA][$syllableB] += 1;
+                    ++$i;
+                }
+
+                $keyA = $lex[count($lex) - 1];
+                $keyB = $syllables->last();
+
+                $matrix[$keyA][$keyB] += 1;
+            });
+
+            $generatedNames = collect(range(1, $numberOfNames))
+                ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
+                    $name = '';
+                    $length = random_int(2, $maxNumberOfSyllables);
+                    $initial = $syllables->random();
+
+                    while ($length > 0) {
+                        while (!in_array(1, $matrix[$initial], true)) {
+                            $initial = $syllables->random();
+                        }
+
+                        $name .= strtolower($initial);
+                        $initial = array_search(1, $matrix[$initial], true);
+                        --$length;
+                    }
+
+                    $suffixIndex = random_int(0, $suffixes->count() - 1);
+                    $name .= ' ';
+                    $name .= $suffixes->get($suffixIndex);
+
+                    return $name;
+                });
+
+            return $generatedNames
+                ->map(function ($generatedName) {
+                    return ucwords(trim($generatedName));
+                })
+                ->toArray();
+        };
     }
 
     /**
