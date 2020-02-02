@@ -3,6 +3,7 @@
 namespace Kaishiyoku\MarkovChainNameGenerator;
 
 use Closure;
+use Exception;
 use Illuminate\Support\Collection;
 
 class MarkovChainNameGenerator
@@ -129,20 +130,32 @@ class MarkovChainNameGenerator
      * @param int $length
      * @return string
      */
-    private function generateSyllable(string $name, string $initial, array $matrix, Collection $syllables, int $length): string
+    private function generateSyllables(string $name, string $initial, array $matrix, Collection $syllables, int $length): string
     {
         if ($length === 0) {
             return $name;
         }
 
-        while (!in_array(1, $matrix[$initial], true)) {
-            $initial = $syllables->random();
+        $foundSyllable = strtolower($this->searchForSyllable($initial, $matrix, $syllables));
+        $newInitial = array_search(1, $matrix[$foundSyllable], true);
+        $newName = $name . $foundSyllable;
+
+        return $this->generateSyllables($newName, $newInitial, $matrix, $syllables, $length - 1);
+    }
+
+    /**
+     * @param string $initial
+     * @param array $matrix
+     * @param Collection $syllables
+     * @return string
+     */
+    private function searchForSyllable(string $initial, array $matrix, Collection $syllables): string
+    {
+        if (!in_array(1, $matrix[$initial], true)) {
+            return $this->searchForSyllable($syllables->random(), $matrix, $syllables);
         }
 
-        $name .= strtolower($initial);
-        $initial = array_search(1, $matrix[$initial], true);
-
-        return $this->generateSyllable($name, $initial, $matrix, $syllables, $length - 1);
+        return $initial;
     }
 
     /**
@@ -160,15 +173,21 @@ class MarkovChainNameGenerator
                 $initial = $syllables->random();
                 $length = random_int(2, $maxNumberOfSyllables);
 
-                $name = $this->generateSyllable('', $initial, $matrix, $syllables, $length);
+                $generatedName = $this->generateSyllables('', $initial, $matrix, $syllables, $length);
 
-                $suffixIndex = random_int(0, $suffixes->count() - 1);
-                $name .= ' ';
-                $name .= $suffixes->get($suffixIndex);
-
-                return ucwords(trim($name));
+                return ucwords(trim($generatedName . $this->generateSuffix($suffixes)));
             })
             ->toArray();
+    }
+
+    /**
+     * @param Collection $suffixes
+     * @return string
+     * @throws Exception
+     */
+    private function generateSuffix(Collection $suffixes): string
+    {
+        return ' ' . $suffixes->get(random_int(0, $suffixes->count() - 1));
     }
 
     /**
