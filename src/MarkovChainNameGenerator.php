@@ -134,18 +134,17 @@ class MarkovChainNameGenerator
         return collect(range(1, $numberOfNames))
             ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
                 $name = '';
-                $length = random_int(2, $maxNumberOfSyllables);
                 $initial = $syllables->random();
 
-                while ($length > 0) {
-                    while (!in_array(1, $matrix[$initial], true)) {
-                        $initial = $syllables->random();
-                    }
+                collect(range(0, random_int(2, $maxNumberOfSyllables) - 1))
+                    ->each(function ($i) use ($matrix, $syllables, &$name, &$initial) {
+                        while (!in_array(1, $matrix[$initial], true)) {
+                            $initial = $syllables->random();
+                        }
 
-                    $name .= strtolower($initial);
-                    $initial = array_search(1, $matrix[$initial], true);
-                    --$length;
-                }
+                        $name .= strtolower($initial);
+                        $initial = array_search(1, $matrix[$initial], true);
+                    });
 
                 $suffixIndex = random_int(0, $suffixes->count() - 1);
                 $name .= ' ';
