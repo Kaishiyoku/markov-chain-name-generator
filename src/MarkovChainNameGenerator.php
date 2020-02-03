@@ -111,6 +111,10 @@ class MarkovChainNameGenerator
         }
 
         return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use ($delimiter, $minNumberOfSyllables, $maxNumberOfSyllables, $emptySuffixesMultiplier) {
+            if ($numberOfNames < 1) {
+                throw new InvalidArgumentException('Number of names must be greater than 0.');
+            }
+
             $names = collect($seedNames);
             $syllables = collect($seedNames)
                 ->map(function ($seedName) use ($delimiter) {
