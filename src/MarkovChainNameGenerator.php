@@ -5,6 +5,7 @@ namespace Kaishiyoku\MarkovChainNameGenerator;
 use Closure;
 use Exception;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 class MarkovChainNameGenerator
 {
@@ -14,12 +15,17 @@ class MarkovChainNameGenerator
     private $delimiter = '-';
 
     /**
+     * @var int The minimum syllable length a generated name will have
+     */
+    private $minNumberOfSyllables = 2;
+
+    /**
      * @var int The maximum syllable length a generated name will have
      */
     private $maxNumberOfSyllables = 3;
 
     /**
-     * @var int Multiplier determining how many empty suffixes should be generated
+     * @var float Multiplier determining how many empty suffixes should be generated
      */
     private $emptySuffixesMultiplier = 2;
 
@@ -33,6 +39,7 @@ class MarkovChainNameGenerator
     {
         $generator = $this->generator(
             $this->getDelimiter(),
+            $this->getMinNumberOfSyllables(),
             $this->getMaxNumberOfSyllables(),
             $this->getEmptySuffixesMultiplier()
         );
@@ -68,18 +75,20 @@ class MarkovChainNameGenerator
     private function fillMatrix(array $matrix, Collection $names, Collection $syllables, string $delimiter): array
     {
         $names->each(function ($name) use (&$matrix, $syllables, $delimiter) {
-            $lex = explode($delimiter, $name);
+            $lex = collect(explode($delimiter, $name))->map(function ($l) {
+                return strtolower($l);
+            });
             $i = 0;
 
             while ($i < count($lex) - 1) {
-                $syllableA = $lex[$i];
-                $syllableB = $lex[$i + 1];
+                $syllableA = $lex->get($i);
+                $syllableB = $lex->get($i + 1);
 
                 $matrix[$syllableA][$syllableB] += 1;
                 ++$i;
             }
 
-            $keyA = $lex[count($lex) - 1];
+            $keyA = $lex->get($lex->count() - 1);
             $keyB = $syllables->last();
 
             $matrix[$keyA][$keyB] += 1;
@@ -90,19 +99,27 @@ class MarkovChainNameGenerator
 
     /**
      * @param string $delimiter
+     * @param int $minNumberOfSyllables
      * @param int $maxNumberOfSyllables
-     * @param int $emptySuffixesMultiplier
+     * @param float $emptySuffixesMultiplier
      * @return Closure
      */
-    private function generator(string $delimiter, int $maxNumberOfSyllables, int $emptySuffixesMultiplier): Closure
+    private function generator(string $delimiter, int $minNumberOfSyllables, int $maxNumberOfSyllables, float $emptySuffixesMultiplier): Closure
     {
-        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use ($delimiter, $maxNumberOfSyllables, $emptySuffixesMultiplier) {
+        if ($maxNumberOfSyllables < $minNumberOfSyllables) {
+            throw new InvalidArgumentException('Maxmimum number of syllables must be greater or equal than the minimum number.');
+        }
+
+        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use ($delimiter, $minNumberOfSyllables, $maxNumberOfSyllables, $emptySuffixesMultiplier) {
             $names = collect($seedNames);
             $syllables = collect($seedNames)
                 ->map(function ($seedName) use ($delimiter) {
                     return explode($delimiter, $seedName);
                 })
                 ->flatten()
+                ->map(function ($syllable) {
+                    return strtolower($syllable);
+                })
                 ->unique();
 
             // preserve empty suffixes, too, so that not every name has a suffix
@@ -118,7 +135,7 @@ class MarkovChainNameGenerator
 
             $matrix = $this->fillMatrix($this->generateEmptyMatrix($syllables), $names, $syllables, $delimiter);
 
-            return $this->generateNamesFromMatrix($matrix, $syllables, $suffixes, $numberOfNames, $maxNumberOfSyllables);
+            return $this->generateNamesFromMatrix($matrix, $syllables, $suffixes, $numberOfNames, $minNumberOfSyllables, $maxNumberOfSyllables);
         };
     }
 
@@ -163,15 +180,16 @@ class MarkovChainNameGenerator
      * @param int $numberOfNames
      * @param Collection $syllables
      * @param Collection $suffixes
+     * @param int $minNumberOfSyllables
      * @param int $maxNumberOfSyllables
      * @return array
      */
-    private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $maxNumberOfSyllables): array
+    private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $minNumberOfSyllables, int $maxNumberOfSyllables): array
     {
         return collect(range(1, $numberOfNames))
-            ->map(function ($i) use ($syllables, $matrix, $suffixes, $maxNumberOfSyllables) {
+            ->map(function ($i) use ($syllables, $matrix, $suffixes, $minNumberOfSyllables, $maxNumberOfSyllables) {
                 $initial = $syllables->random();
-                $length = random_int(2, $maxNumberOfSyllables);
+                $length = random_int($minNumberOfSyllables, $maxNumberOfSyllables);
 
                 $generatedName = $this->generateSyllables('', $initial, $matrix, $syllables, $length);
 
@@ -209,6 +227,26 @@ class MarkovChainNameGenerator
     /**
      * @return int
      */
+    public function getMinNumberOfSyllables(): int
+    {
+        return $this->minNumberOfSyllables;
+    }
+
+    /**
+     * @param int $minNumberOfSyllables
+     */
+    public function setMinNumberOfSyllables(int $minNumberOfSyllables): void
+    {
+        if ($minNumberOfSyllables <= 0) {
+            throw new InvalidArgumentException('Must be greater than 0.');
+        }
+
+        $this->minNumberOfSyllables = $minNumberOfSyllables;
+    }
+
+    /**
+     * @return int
+     */
     public function getMaxNumberOfSyllables(): int
     {
         return $this->maxNumberOfSyllables;
@@ -223,17 +261,17 @@ class MarkovChainNameGenerator
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getEmptySuffixesMultiplier(): int
+    public function getEmptySuffixesMultiplier(): float
     {
         return $this->emptySuffixesMultiplier;
     }
 
     /**
-     * @param int $emptySuffixesMultiplier
+     * @param float $emptySuffixesMultiplier
      */
-    public function setEmptySuffixesMultiplier(int $emptySuffixesMultiplier): void
+    public function setEmptySuffixesMultiplier(float $emptySuffixesMultiplier): void
     {
         $this->emptySuffixesMultiplier = $emptySuffixesMultiplier;
     }
