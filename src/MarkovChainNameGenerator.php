@@ -38,10 +38,10 @@ class MarkovChainNameGenerator
     public function generateNames(array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1): array
     {
         $generator = $this->generator(
-            $this->getDelimiter(),
-            $this->getMinNumberOfSyllables(),
-            $this->getMaxNumberOfSyllables(),
-            $this->getEmptySuffixesMultiplier()
+            $this->delimiter,
+            $this->minNumberOfSyllables,
+            $this->maxNumberOfSyllables,
+            $this->emptySuffixesMultiplier
         );
 
         return $generator($seedNames, $seedNameSuffixes, $numberOfNames);
@@ -191,7 +191,7 @@ class MarkovChainNameGenerator
     private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $minNumberOfSyllables, int $maxNumberOfSyllables): array
     {
         return collect(range(1, $numberOfNames))
-            ->map(function ($i) use ($syllables, $matrix, $suffixes, $minNumberOfSyllables, $maxNumberOfSyllables) {
+            ->map(function () use ($syllables, $matrix, $suffixes, $minNumberOfSyllables, $maxNumberOfSyllables) {
                 $initial = $syllables->random();
                 $length = random_int($minNumberOfSyllables, $maxNumberOfSyllables);
 
@@ -213,27 +213,11 @@ class MarkovChainNameGenerator
     }
 
     /**
-     * @return string
-     */
-    public function getDelimiter(): string
-    {
-        return $this->delimiter;
-    }
-
-    /**
      * @param string $delimiter
      */
     public function setDelimiter(string $delimiter): void
     {
         $this->delimiter = $delimiter;
-    }
-
-    /**
-     * @return int
-     */
-    public function getMinNumberOfSyllables(): int
-    {
-        return $this->minNumberOfSyllables;
     }
 
     /**
@@ -249,27 +233,11 @@ class MarkovChainNameGenerator
     }
 
     /**
-     * @return int
-     */
-    public function getMaxNumberOfSyllables(): int
-    {
-        return $this->maxNumberOfSyllables;
-    }
-
-    /**
      * @param int $maxNumberOfSyllables
      */
     public function setMaxNumberOfSyllables(int $maxNumberOfSyllables): void
     {
         $this->maxNumberOfSyllables = $maxNumberOfSyllables;
-    }
-
-    /**
-     * @return float
-     */
-    public function getEmptySuffixesMultiplier(): float
-    {
-        return $this->emptySuffixesMultiplier;
     }
 
     /**
