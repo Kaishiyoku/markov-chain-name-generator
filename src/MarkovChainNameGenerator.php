@@ -78,15 +78,13 @@ class MarkovChainNameGenerator
             $lex = collect(explode($delimiter, $name))->map(function ($l) {
                 return strtolower($l);
             });
-            $i = 0;
 
-            while ($i < count($lex) - 1) {
+            collect(range(0, $lex->count() - 2))->each(function ($i) use ($lex, &$matrix) {
                 $syllableA = $lex->get($i);
                 $syllableB = $lex->get($i + 1);
 
                 $matrix[$syllableA][$syllableB] += 1;
-                ++$i;
-            }
+            });
 
             $keyA = $lex->get($lex->count() - 1);
             $keyB = $syllables->last();
