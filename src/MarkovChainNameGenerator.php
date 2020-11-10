@@ -79,11 +79,19 @@ class MarkovChainNameGenerator
                 return strtolower($l);
             });
 
+            if ($lex->count() < 2) {
+                throw new InvalidArgumentException('At least two syllables must be present.');
+            }
+
             collect(range(0, $lex->count() - 2))->each(function ($i) use ($lex, &$matrix) {
                 $syllableA = $lex->get($i);
                 $syllableB = $lex->get($i + 1);
 
-                $matrix[$syllableA][$syllableB] += 1;
+                try {
+                    $matrix[$syllableA][$syllableB] += 1;
+                } catch (\Throwable $e) {
+                    print_r(compact('syllableA', 'syllableB'));
+                }
             });
 
             $keyA = $lex->get($lex->count() - 1);

@@ -42,15 +42,13 @@ class MarkovChainNameGeneratorTest extends TestCase
 
         $this->assertCount(10, $generatedNames);
 
-        $name = 'AAA';
-
-        $this->assertMatchesRegularExpression('/^Aa*$/', $markovChainNameGenerator->generateNames([$name])[0]);
+        $this->assertMatchesRegularExpression('/^[AaBb]*$/', $markovChainNameGenerator->generateNames(['AAA-BBB'])[0]);
 
         $markovChainNameGenerator->setDelimiter('*');
         $markovChainNameGenerator->setEmptySuffixesMultiplier(10);
         $markovChainNameGenerator->setMaxNumberOfSyllables(9);
         $markovChainNameGenerator->setMaxNumberOfSyllables(10);
 
-        $this->assertMatchesRegularExpression('/^Aa*$/', $markovChainNameGenerator->generateNames([$name])[0]);
+        $this->assertMatchesRegularExpression('/^[AaBb]*$/', $markovChainNameGenerator->generateNames(['AAA*BBB'])[0]);
     }
 }
