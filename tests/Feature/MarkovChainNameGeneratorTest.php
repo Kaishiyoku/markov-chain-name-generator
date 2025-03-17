@@ -30,15 +30,17 @@ it('generates names', function () {
     ];
 
     $markovChainNameGenerator = new MarkovChainNameGenerator();
-    $generatedNames = $markovChainNameGenerator->generateNames($names, $suffixes, 10);
+    $markovChainNameGenerator->setSeed($names, $suffixes);
+    $generatedNames = $markovChainNameGenerator->generate(10);
+    expect($generatedNames)->toHaveCount(10);
 
-    expect($generatedNames)->toHaveCount(10)
-        ->and($markovChainNameGenerator->generateNames(['AAA-BBB'])[0])->toMatch('/^[AaBb]*$/');
+    $markovChainNameGenerator->setSeed(['AAA-BBB']);
+    expect($markovChainNameGenerator->generate()[0])->toMatch('/^[AaBb]*$/');
 
+    $markovChainNameGenerator->setSeed(['AAA*BBB']);
     $markovChainNameGenerator->setDelimiter('*');
     $markovChainNameGenerator->setEmptySuffixesMultiplier(10);
     $markovChainNameGenerator->setMaxNumberOfSyllables(9);
     $markovChainNameGenerator->setMaxNumberOfSyllables(10);
-
-    expect($markovChainNameGenerator->generateNames(['AAA*BBB'])[0])->toMatch('/^[AaBb]*$/');
+    expect($markovChainNameGenerator->generate()[0])->toMatch('/^[AaBb]*$/');
 });

@@ -30,12 +30,30 @@ class MarkovChainNameGenerator
     private float $emptySuffixesMultiplier = 2;
 
     /**
-     * @param  string[]  $seedNames
-     * @param  string[]  $seedNameSuffixes
+     * @var string[]
+     */
+    private array $seedNames = [];
+
+    /**
+     * @var string[]
+     */
+    private array $seedNameSuffixes = [];
+
+    public function setSeed(Collection|array $seedNames, Collection|array $seedNameSuffixes = [])
+    {
+        $this->seedNames = $seedNames instanceof Collection ? $seedNames->toArray() : $seedNames;
+        $this->seedNameSuffixes = $seedNameSuffixes instanceof Collection ? $seedNameSuffixes->toArray() : $seedNameSuffixes;
+    }
+
+    /**
      * @return string[]
      */
-    public function generateNames(array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1): array
+    public function generate(int $numberOfNames = 1): array
     {
+//        if (count($this->seedNames) === 0) {
+//            throw new InvalidArgumentException('You must provide at least one seed name.');
+//        }
+
         $generator = $this->generator(
             $this->delimiter,
             $this->minNumberOfSyllables,
@@ -43,7 +61,7 @@ class MarkovChainNameGenerator
             $this->emptySuffixesMultiplier
         );
 
-        return $generator($seedNames, $seedNameSuffixes, $numberOfNames);
+        return $generator($numberOfNames);
     }
 
     private function generateEmptyMatrix(Collection $syllables): array
@@ -94,7 +112,7 @@ class MarkovChainNameGenerator
             throw new InvalidArgumentException('Maxmimum number of syllables must be greater or equal than the minimum number.');
         }
 
-        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use (
+        return function (int $numberOfNames = 1) use (
             $delimiter,
             $minNumberOfSyllables,
             $maxNumberOfSyllables,
@@ -104,16 +122,16 @@ class MarkovChainNameGenerator
                 throw new InvalidArgumentException('Number of names must be greater than 0.');
             }
 
-            $names = collect($seedNames);
-            $syllables = collect($seedNames)
+            $names = collect($this->seedNames);
+            $syllables = collect($this->seedNames)
                 ->map(fn ($seedName) => explode($delimiter, $seedName))
                 ->flatten()
                 ->map(fn ($syllable) => strtolower($syllable))
                 ->unique();
 
             // preserve empty suffixes, too, so that not every name has a suffix
-            $suffixes = collect(range(0, count($seedNameSuffixes) * $emptySuffixesMultiplier))
-                ->map(fn ($value, $key) => $key < count($seedNameSuffixes) ? $seedNameSuffixes[$key] : '')
+            $suffixes = collect(range(0, count($this->seedNameSuffixes) * $emptySuffixesMultiplier))
+                ->map(fn ($value, $key) => $key < count($this->seedNameSuffixes) ? $this->seedNameSuffixes[$key] : '')
                 ->shuffle();
 
             $matrix = $this->fillMatrix($this->generateEmptyMatrix($syllables), $names, $syllables, $delimiter);
@@ -172,12 +190,11 @@ class MarkovChainNameGenerator
 
     /**
      * @param  Collection<string>  $suffixes
-     *
      * @throws Exception
      */
     private function generateSuffix(Collection $suffixes): string
     {
-        return ' '.$suffixes->get(random_int(0, $suffixes->count() - 1));
+        return " {$suffixes->get(random_int(0, $suffixes->count() - 1))}";
     }
 
     public function setDelimiter(string $delimiter): void
