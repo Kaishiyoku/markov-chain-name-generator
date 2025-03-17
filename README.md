@@ -1,2 +1,5 @@
-# markov-chain-name-generator
-A name generator using a Markov chain and syllables
+[![Tests](https://github.com/Kaishiyoku/markov-chain-name-generator/actions/workflows/tests.yml/badge.svg)](https://github.com/Kaishiyoku/markov-chain-name-generator/actions/workflows/tests.yml)
+[![Latest Stable Version](http://poser.pugx.org/kaishiyoku/markov-chain-name-generator/v)](https://packagist.org/packages/kaishiyoku/markov-chain-name-generator)
+[![Total Downloads](http://poser.pugx.org/kaishiyoku/markov-chain-name-generator/downloads)](https://packagist.org/packages/kaishiyoku/markov-chain-name-generator)
+[![License](http://poser.pugx.org/kaishiyoku/markov-chain-name-generator/license)](https://packagist.org/packages/kaishiyoku/markov-chain-name-generator)
+[![PHP Version Require](http://poser.pugx.org/kaishiyoku/markov-chain-name-generator/require/php)](https://packagist.org/packages/kaishiyoku/markov-chain-name-generator)
