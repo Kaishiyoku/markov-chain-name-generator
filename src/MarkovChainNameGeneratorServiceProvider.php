@@ -14,7 +14,7 @@ class MarkovChainNameGeneratorServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(MarkovChainNameGenerator::class, function ($app) {
-            return new MarkovChainNameGenerator();
+            return new MarkovChainNameGenerator;
         });
     }
 }

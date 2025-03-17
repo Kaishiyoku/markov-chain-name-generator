@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  */
 class MarkovChainNameGeneratorTest extends TestCase
 {
-    public function testGenerateNames()
+    public function test_generate_names()
     {
         $names = [
             'Ap-pi-us',
@@ -34,10 +34,10 @@ class MarkovChainNameGeneratorTest extends TestCase
         $suffixes = [
             'I',
             'II',
-            'III'
+            'III',
         ];
 
-        $markovChainNameGenerator = new MarkovChainNameGenerator();
+        $markovChainNameGenerator = new MarkovChainNameGenerator;
         $generatedNames = $markovChainNameGenerator->generateNames($names, $suffixes, 10);
 
         $this->assertCount(10, $generatedNames);

@@ -30,9 +30,8 @@ class MarkovChainNameGenerator
     private float $emptySuffixesMultiplier = 2;
 
     /**
-     * @param string[] $seedNames
-     * @param string[] $seedNameSuffixes
-     * @param int $numberOfNames
+     * @param  string[]  $seedNames
+     * @param  string[]  $seedNameSuffixes
      * @return string[]
      */
     public function generateNames(array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1): array
@@ -47,29 +46,18 @@ class MarkovChainNameGenerator
         return $generator($seedNames, $seedNameSuffixes, $numberOfNames);
     }
 
-    /**
-     * @param Collection $syllables
-     * @return array
-     */
     private function generateEmptyMatrix(Collection $syllables): array
     {
         return $syllables
-            ->mapWithKeys(fn($syllable, $key) => [$syllable => $syllables->mapWithKeys(fn($syllable, $key) => [$syllable => 0])])
-            ->map(fn($value) => $value->toArray())
+            ->mapWithKeys(fn ($syllable, $key) => [$syllable => $syllables->mapWithKeys(fn ($syllable, $key) => [$syllable => 0])])
+            ->map(fn ($value) => $value->toArray())
             ->toArray();
     }
 
-    /**
-     * @param array $matrix
-     * @param Collection $names
-     * @param Collection $syllables
-     * @param string $delimiter
-     * @return array
-     */
     private function fillMatrix(array $matrix, Collection $names, Collection $syllables, string $delimiter): array
     {
         $names->each(function ($name) use (&$matrix, $syllables, $delimiter) {
-            $lex = collect(explode($delimiter, $name))->map(fn($l) => strtolower($l));
+            $lex = collect(explode($delimiter, $name))->map(fn ($l) => strtolower($l));
 
             if ($lex->count() < 2) {
                 throw new InvalidArgumentException('At least two syllables must be present.');
@@ -95,13 +83,6 @@ class MarkovChainNameGenerator
         return $matrix;
     }
 
-    /**
-     * @param string $delimiter
-     * @param int $minNumberOfSyllables
-     * @param int $maxNumberOfSyllables
-     * @param float $emptySuffixesMultiplier
-     * @return Closure
-     */
     private function generator(string $delimiter, int $minNumberOfSyllables, int $maxNumberOfSyllables, float $emptySuffixesMultiplier): Closure
     {
         if ($maxNumberOfSyllables < $minNumberOfSyllables) {
@@ -115,14 +96,14 @@ class MarkovChainNameGenerator
 
             $names = collect($seedNames);
             $syllables = collect($seedNames)
-                ->map(fn($seedName) => explode($delimiter, $seedName))
+                ->map(fn ($seedName) => explode($delimiter, $seedName))
                 ->flatten()
-                ->map(fn($syllable) => strtolower($syllable))
+                ->map(fn ($syllable) => strtolower($syllable))
                 ->unique();
 
             // preserve empty suffixes, too, so that not every name has a suffix
             $suffixes = collect(range(0, count($seedNameSuffixes) * $emptySuffixesMultiplier))
-                ->map(fn($value, $key) => $key < count($seedNameSuffixes) ? $seedNameSuffixes[$key] : '')
+                ->map(fn ($value, $key) => $key < count($seedNameSuffixes) ? $seedNameSuffixes[$key] : '')
                 ->shuffle();
 
             $matrix = $this->fillMatrix($this->generateEmptyMatrix($syllables), $names, $syllables, $delimiter);
@@ -131,14 +112,6 @@ class MarkovChainNameGenerator
         };
     }
 
-    /**
-     * @param string $name
-     * @param string $initial
-     * @param array $matrix
-     * @param Collection $syllables
-     * @param int $length
-     * @return string
-     */
     private function generateSyllables(string $name, string $initial, array $matrix, Collection $syllables, int $length): string
     {
         if ($length === 0) {
@@ -147,35 +120,20 @@ class MarkovChainNameGenerator
 
         $foundSyllable = strtolower($this->searchForSyllable($initial, $matrix, $syllables));
         $newInitial = array_search(1, $matrix[$foundSyllable], true);
-        $newName = $name . $foundSyllable;
+        $newName = $name.$foundSyllable;
 
         return $this->generateSyllables($newName, $newInitial, $matrix, $syllables, $length - 1);
     }
 
-    /**
-     * @param string $initial
-     * @param array $matrix
-     * @param Collection $syllables
-     * @return string
-     */
     private function searchForSyllable(string $initial, array $matrix, Collection $syllables): string
     {
-        if (!in_array(1, $matrix[$initial], true)) {
+        if (! in_array(1, $matrix[$initial], true)) {
             return $this->searchForSyllable($syllables->random(), $matrix, $syllables);
         }
 
         return $initial;
     }
 
-    /**
-     * @param array $matrix
-     * @param int $numberOfNames
-     * @param Collection $syllables
-     * @param Collection $suffixes
-     * @param int $minNumberOfSyllables
-     * @param int $maxNumberOfSyllables
-     * @return array
-     */
     private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $minNumberOfSyllables, int $maxNumberOfSyllables): array
     {
         return collect(range(1, $numberOfNames))
@@ -185,19 +143,19 @@ class MarkovChainNameGenerator
 
                 $generatedName = $this->generateSyllables('', $initial, $matrix, $syllables, $length);
 
-                return ucwords(trim($generatedName . $this->generateSuffix($suffixes)));
+                return ucwords(trim($generatedName.$this->generateSuffix($suffixes)));
             })
             ->toArray();
     }
 
     /**
-     * @param Collection<string> $suffixes
-     * @return string
+     * @param  Collection<string>  $suffixes
+     *
      * @throws Exception
      */
     private function generateSuffix(Collection $suffixes): string
     {
-        return ' ' . $suffixes->get(random_int(0, $suffixes->count() - 1));
+        return ' '.$suffixes->get(random_int(0, $suffixes->count() - 1));
     }
 
     public function setDelimiter(string $delimiter): void
