@@ -49,7 +49,12 @@ class MarkovChainNameGenerator
     private function generateEmptyMatrix(Collection $syllables): array
     {
         return $syllables
-            ->mapWithKeys(fn ($syllable, $key) => [$syllable => $syllables->mapWithKeys(fn ($syllable, $key) => [$syllable => 0])])
+            ->mapWithKeys(fn ($syllable, $key) => [
+                $syllable => $syllables->mapWithKeys(fn (
+                    $syllable,
+                    $key
+                ) => [$syllable => 0])
+            ])
             ->map(fn ($value) => $value->toArray())
             ->toArray();
     }
@@ -67,11 +72,7 @@ class MarkovChainNameGenerator
                 $syllableA = $lex->get($i);
                 $syllableB = $lex->get($i + 1);
 
-                try {
-                    $matrix[$syllableA][$syllableB] += 1;
-                } catch (\Throwable $e) {
-                    print_r(compact('syllableA', 'syllableB'));
-                }
+                $matrix[$syllableA][$syllableB] += 1;
             });
 
             $keyA = $lex->get($lex->count() - 1);
@@ -83,13 +84,22 @@ class MarkovChainNameGenerator
         return $matrix;
     }
 
-    private function generator(string $delimiter, int $minNumberOfSyllables, int $maxNumberOfSyllables, float $emptySuffixesMultiplier): Closure
-    {
+    private function generator(
+        string $delimiter,
+        int $minNumberOfSyllables,
+        int $maxNumberOfSyllables,
+        float $emptySuffixesMultiplier
+    ): Closure {
         if ($maxNumberOfSyllables < $minNumberOfSyllables) {
             throw new InvalidArgumentException('Maxmimum number of syllables must be greater or equal than the minimum number.');
         }
 
-        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use ($delimiter, $minNumberOfSyllables, $maxNumberOfSyllables, $emptySuffixesMultiplier) {
+        return function (array $seedNames, array $seedNameSuffixes = [], int $numberOfNames = 1) use (
+            $delimiter,
+            $minNumberOfSyllables,
+            $maxNumberOfSyllables,
+            $emptySuffixesMultiplier
+        ) {
             if ($numberOfNames < 1) {
                 throw new InvalidArgumentException('Number of names must be greater than 0.');
             }
@@ -108,12 +118,18 @@ class MarkovChainNameGenerator
 
             $matrix = $this->fillMatrix($this->generateEmptyMatrix($syllables), $names, $syllables, $delimiter);
 
-            return $this->generateNamesFromMatrix($matrix, $syllables, $suffixes, $numberOfNames, $minNumberOfSyllables, $maxNumberOfSyllables);
+            return $this->generateNamesFromMatrix($matrix, $syllables, $suffixes, $numberOfNames, $minNumberOfSyllables,
+                $maxNumberOfSyllables);
         };
     }
 
-    private function generateSyllables(string $name, string $initial, array $matrix, Collection $syllables, int $length): string
-    {
+    private function generateSyllables(
+        string $name,
+        string $initial,
+        array $matrix,
+        Collection $syllables,
+        int $length
+    ): string {
         if ($length === 0) {
             return $name;
         }
@@ -134,8 +150,14 @@ class MarkovChainNameGenerator
         return $initial;
     }
 
-    private function generateNamesFromMatrix(array $matrix, Collection $syllables, Collection $suffixes, int $numberOfNames, int $minNumberOfSyllables, int $maxNumberOfSyllables): array
-    {
+    private function generateNamesFromMatrix(
+        array $matrix,
+        Collection $syllables,
+        Collection $suffixes,
+        int $numberOfNames,
+        int $minNumberOfSyllables,
+        int $maxNumberOfSyllables
+    ): array {
         return collect(range(1, $numberOfNames))
             ->map(function () use ($syllables, $matrix, $suffixes, $minNumberOfSyllables, $maxNumberOfSyllables) {
                 $initial = $syllables->random();
